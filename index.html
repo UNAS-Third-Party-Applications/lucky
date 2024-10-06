@@ -1,0 +1,601 @@
+<!--[if IE]>
+  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<![endif]-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>U-NAS</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=8" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/apps/lucky/css/index.css?v=6.0.2&"
+    />
+    <script>
+      window.top.UNAS.SetAppState('Lucky', 'active')
+    </script>
+    <script language="JavaScript" type="text/javascript">
+      jQuery.noConflict()
+      ;(function () {
+        getConfig()
+        jQuery('#lucky_port').keyup(luckyCheckPortFunc)
+      })()
+
+      function getConfig() {
+        jQuery('#lucky_manager_waiting_content').attr('style', 'display:block')
+        jQuery('#lucky_manager_waiting_logo').attr('style', 'display:block')
+        jQuery.ajax({
+          url: '/apps/lucky/includes/services.php',
+          type: 'POST',
+          async: true,
+          contentType: 'application/json',
+          data: JSON.stringify({ token: UToken, action: 'getConfig' }),
+          dataType: 'json',
+          timeout: 20000,
+          success: function (data) {
+            if (data.pass == 'exit') {
+              parent.location.assign('/desktop/')
+            } else {
+              if (data.enable) {
+                serviceState = true
+                jQuery('#servcieState').html(UNAS._('Enable'))
+                jQuery('#changeState').html(UNAS._('Unable'))
+                jQuery('#manageAppDiv').attr('style', 'display:block;')
+                jQuery('#lucky_config_dir').attr('disabled', true)
+              } else {
+                serviceState = false
+                jQuery('#lucky_config_dir').attr('disabled', false)
+                jQuery('#servcieState').html(UNAS._('Unable'))
+                jQuery('#changeState').html(UNAS._('Enable'))
+                jQuery('#manageAppDiv').attr('style', 'display:none;')
+              }
+
+              var shareFolders = data.shareFolders
+              var selectFolder = data.configDir
+              if (
+                data.homesExtConfigFolder &&
+                data.homesExtConfigFolder !== ''
+              ) {
+                if (shareFolders) {
+                  shareFolders.unshift({
+                    path: data.homesExtConfigFolder,
+                  })
+                } else {
+                  shareFolders = [
+                    {
+                      path: data.homesExtConfigFolder,
+                    },
+                  ]
+                }
+                if (
+                  selectFolder === null ||
+                  selectFolder === undefined ||
+                  selectFolder === ''
+                ) {
+                  selectFolder = data.homesExtConfigFolder
+                }
+              }
+              var shareFolderAvail = share_folder_list(
+                'lucky_config_dir',
+                shareFolders,
+                selectFolder
+              )
+
+              if (shareFolderAvail) {
+                jQuery('#lucky_apply').attr('class', 'unas_button')
+              } else {
+                jQuery('#lucky_apply').attr('class', 'unas_button_disabled')
+              }
+            }
+            jQuery('#lucky_manager_waiting_content').attr(
+              'style',
+              'display:none'
+            )
+            jQuery('#lucky_manager_waiting_logo').attr('style', 'display:none')
+          },
+          error: function (XMLHttpRequest, textStatus, errorThrown) {
+            alert(textStatus)
+            jQuery('#lucky_manager_waiting_content').attr(
+              'style',
+              'display:none'
+            )
+            jQuery('#lucky_manager_waiting_logo').attr('style', 'display:none')
+          },
+        })
+      }
+
+      function luckyCheckPortFunc() {
+        if (luckyCheckPort())
+          jQuery('#lucky_apply').attr('class', 'unas_button')
+        else jQuery('#lucky_apply').attr('class', 'unas_button_disabled')
+      }
+
+      function luckyCheckPort() {
+        var portState = false
+        var port = parseInt(jQuery.trim(jQuery('#lucky_port').val()), 10)
+        if (isNaN(port)) {
+          jQuery('#lucky_port').val('')
+        } else {
+          jQuery('#lucky_port').val(port)
+        }
+        if (usedPort === port) {
+          // 端口可正在用的端口是一样的，不需要验证
+          jQuery('#lucky_port_warning').attr('class', 'input_warning')
+          jQuery('#lucky_port_warning').attr('title', '')
+          jQuery('#lucky_port_warning').html('')
+          portState = true
+        } else if (port > 65535 || port < 1) {
+          jQuery('#lucky_port_warning').attr('class', 'input_warning_info')
+          jQuery('#lucky_port_warning').attr(
+            'title',
+            UNAS._('Port should between 1 and 65535')
+          )
+          jQuery('#lucky_port_warning').html(
+            '* ' + UNAS._('Port should between 1 and 65535')
+          )
+        } else {
+          jQuery.ajax({
+            url: '/apps/lucky/includes/services.php',
+            type: 'POST',
+            async: false,
+            contentType: 'application/json',
+            data: JSON.stringify({
+              token: UToken,
+              port: port,
+              action: 'checkport',
+            }),
+            timeout: 20000,
+            dataType: 'json',
+            success: function (data) {
+              if (data.err === 1) {
+                jQuery('#lucky_port_warning').attr(
+                  'class',
+                  'input_warning_info'
+                )
+                jQuery('#lucky_port_warning').attr('title', UNAS._(data.msg))
+                jQuery('#lucky_port_warning').html('* ' + UNAS._(data.msg))
+              } else {
+                jQuery('#lucky_port_warning').attr('class', 'input_warning')
+                jQuery('#lucky_port_warning').attr('title', '')
+                jQuery('#lucky_port_warning').html('')
+                portState = true
+              }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+              alert(textStatus)
+            },
+          })
+        }
+        return portState
+      }
+
+      function isNumeric(strval) {
+        var c
+        for (var i = 0; i < strval.length; i++) {
+          c = strval.charAt(i)
+          if (c < '0' || c > '9') {
+            return false
+          }
+        }
+        return true
+      }
+
+      function submit() {
+        jQuery('#lucky_info').removeClass('error-info')
+        jQuery('#lucky_info').removeClass('success-info')
+        jQuery('#lucky_info').html('')
+        if (jQuery('#lucky_apply').hasClass('unas_button_disabled')) {
+          return false
+        }
+        jQuery('#lucky_manager_waiting_content').attr('style', 'display:block')
+        jQuery('#lucky_manager_waiting_logo').attr('style', 'display:block')
+
+        var enable = !serviceState,
+          configDir = jQuery('#lucky_config_dir').val()
+        var params = {
+          token: UToken,
+          enable: enable,
+          configDir: configDir,
+          action: 'changeState',
+        }
+        jQuery.ajax({
+          url: '/apps/lucky/includes/services.php',
+          type: 'POST',
+          async: true,
+          contentType: 'application/json',
+          data: JSON.stringify(params),
+          timeout: 20000,
+          dataType: 'json',
+          success: function (data) {
+            if (data.err === 0) {
+              jQuery('#lucky_info').removeClass('error-info')
+              jQuery('#lucky_info').addClass('success-info')
+              jQuery('#lucky_info').html(UNAS._('Operation successful'))
+            } else {
+              jQuery('#lucky_info').removeClass('success-info')
+              jQuery('#lucky_info').addClass('error-info')
+              jQuery('#lucky_info').html(UNAS._(data.msg))
+            }
+            jQuery('#lucky_manager_waiting_content').attr(
+              'style',
+              'display:none'
+            )
+            jQuery('#lucky_manager_waiting_logo').attr('style', 'display:none')
+            getConfig()
+          },
+          error: function (XMLHttpRequest, textStatus, errorThrown) {
+            alert(textStatus)
+            jQuery('#lucky_manager_waiting_content').attr(
+              'style',
+              'display:none'
+            )
+            jQuery('#lucky_manager_waiting_logo').attr('style', 'display:none')
+          },
+        })
+      }
+
+      function manage(eleId) {
+        jQuery('#lucky_info').removeClass('error-info')
+        jQuery('#lucky_info').removeClass('success-info')
+        jQuery('#lucky_info').html('')
+        jQuery('#lucky_oper_info').removeClass('error-info')
+        jQuery('#lucky_oper_info').removeClass('success-info')
+        jQuery('#lucky_oper_info').html('')
+        jQuery('#lucky_manager_waiting_content').attr('style', 'display:block')
+        jQuery('#lucky_manager_waiting_logo').attr('style', 'display:block')
+
+        var params = {
+          token: UToken,
+          action: 'manage',
+        }
+
+        if ('lucky_cancel_safe_url' === eleId) {
+          // var val = jQuery('#lucky_cancel_safe_url').prop('checked')
+          params.cancelSafeURL = true
+        } else if ('lucky_disable2FA' === eleId) {
+          // var val = jQuery('#lucky_disable2FA').prop('checked')
+          params.disable2FA = true
+        } else if ('lucky_reset_user' === eleId) {
+          // var val = jQuery('#lucky_reset_user').prop('checked')
+          params.resetUser = true
+        } else if ('lucky_http_port' === eleId) {
+          var val = jQuery('#lucky_http_port').val()
+          params.httpPort = val
+        } else if ('lucky_https_port' === eleId) {
+          var val = jQuery('#lucky_https_port').val()
+          params.httpsPort = val
+        } else if ('lucky_unlock' === eleId) {
+          // var val = jQuery('#lucky_unlock').prop('checked')
+          params.unlock = true
+        }
+        jQuery.ajax({
+          url: '/apps/lucky/includes/services.php',
+          type: 'POST',
+          async: true,
+          contentType: 'application/json',
+          data: JSON.stringify(params),
+          timeout: 20000,
+          dataType: 'json',
+          success: function (data) {
+            if (data.err === 0) {
+              jQuery('#lucky_http_port').val('')
+              jQuery('#lucky_https_port').val('')
+              jQuery('#lucky_oper_info').removeClass('error-info')
+              jQuery('#lucky_oper_info').addClass('success-info')
+              jQuery('#lucky_oper_info').html(UNAS._('Operation successful'))
+            } else {
+              jQuery('#lucky_oper_info').removeClass('success-info')
+              jQuery('#lucky_oper_info').addClass('error-info')
+              jQuery('#lucky_oper_info').html(UNAS._(data.msg))
+            }
+            jQuery('#lucky_manager_waiting_content').attr(
+              'style',
+              'display:none'
+            )
+            jQuery('#lucky_manager_waiting_logo').attr('style', 'display:none')
+          },
+          error: function (XMLHttpRequest, textStatus, errorThrown) {
+            console.log(textStatus)
+            jQuery('#lucky_oper_info').removeClass('success-info')
+            jQuery('#lucky_oper_info').addClass('error-info')
+            jQuery('#lucky_oper_info').html(UNAS._('Operation failed'))
+            jQuery('#lucky_manager_waiting_content').attr(
+              'style',
+              'display:none'
+            )
+            jQuery('#lucky_manager_waiting_logo').attr('style', 'display:none')
+          },
+        })
+      }
+
+      // 功能函数，缩略太长的字符串
+      function trunc(str, len) {
+        if (str == null) return ''
+        var str_length = 0
+        var str_cut = new String()
+        for (var i = 0; i < str.length; i++) {
+          a = str.charAt(i)
+          str_length++
+          if (escape(a).length > 4) {
+            str_length++
+          }
+          str_cut = str_cut.concat(a)
+          if (str_length > len) {
+            str_cut = str_cut.concat('...')
+            return str_cut
+          }
+        }
+        if (str_length <= len) {
+          return str
+        }
+      }
+
+      function share_folder_list(elementId, folders, folder_selected) {
+        var folder_opts = ''
+        var selected = false
+        var shareFolderAvail = false
+        if (folders === null || folders === undefined || folders.length === 0) {
+          // 没有共享文件夹可用
+          shareFolderAvail = false
+          folder_opts =
+            '<option value="">' +
+            UNAS._(
+              '##$@lucky@$##Enable Home Dir or create a SHARE FOLDER before select##$@lucky@$##'
+            ) +
+            '</option>'
+        } else {
+          shareFolderAvail = true
+          for (var i = 0; i < folders.length; i++) {
+            var folderPath = folders[i].path
+            folder_opts +=
+              '<option value="' +
+              folderPath +
+              '"' +
+              ' title="' +
+              folderPath +
+              '"'
+            if (folderPath == folder_selected) {
+              folder_opts += ' selected="selected"'
+              selected = true
+            }
+            folder_opts += '>' + trunc(folderPath, 30) + '</option>'
+          }
+        }
+        jQuery('#' + elementId).html(folder_opts)
+        if (shareFolderAvail && !selected) {
+          jQuery('#' + elementId + ' option:first').prop('selected', 'selected')
+        }
+        return shareFolderAvail
+      }
+    </script>
+  </head>
+  <body>
+    <div id="lucky" class="lucky_manager">
+      <div
+        id="lucky_manager_waiting_content"
+        class="unas_loading_modal"
+        style="display: none"
+      ></div>
+      <div
+        id="lucky_manager_waiting_logo"
+        class="unas_loading"
+        style="display: none"
+      ></div>
+      <div class="unas_title">
+        <div class="unas_tab_sel">
+          <span>##$@lucky@$##Lucky##$@lucky@$##</span>
+        </div>
+      </div>
+      <div class="unas_content">
+        <div
+          id="lucky-unas_content_left"
+          class="unas_content_left"
+          style="
+            position: absolute;
+            width: calc(100% - 150px);
+            left: 0;
+            bottom: 60px;
+            top: 60px;
+          "
+        >
+          <div id="lucky_info" class="info-div"></div>
+          <div class="unas_items lucky-item-li">
+            <ul>
+              <li class="unas_item_li" style="margin-bottom: 10px">
+                <span style="margin-left: 40px">
+                  ##$@lucky@$##Lucky Service State##$@lucky@$##:
+                </span>
+                <span id="servcieState" style="margin-left: 20px"></span>
+              </li>
+              <li class="unas_item_li" style="margin-bottom: 10px">
+                <span class="span_left" style="margin-left: 40px"
+                  >##$@lucky@$##Configuration Directory:##$@lucky@$##</span
+                >
+                <span>
+                  <select
+                    class="unas_select"
+                    id="lucky_config_dir"
+                    name="lucky_config_dir"
+                    style="display: inline-block"
+                  ></select>
+                  <button
+                    id="changeState"
+                    onClick="submit()"
+                    class="unas_button"
+                  >
+                    ##$@lucky@$##Enable##$@lucky@$##
+                  </button>
+                </span>
+              </li>
+            </ul>
+          </div>
+          <div
+            id="manageAppDiv"
+            class="unas_items lucky-item-li"
+            style="display: none"
+          >
+            <div class="manage-app">##$@lucky@$##Manage Lucky##$@lucky@$##</div>
+            <div id="lucky_oper_info" class="info-div"></div>
+            <ul>
+              <li class="unas_item_li" style="margin-bottom: 10px">
+                <span class="check-box-prop">
+                  <!-- <input type="checkbox" id="lucky_cancel_safe_url" /> -->
+                  <label for="lucky_cancel_safe_url"
+                    >##$@lucky@$##Cancel Safe URL##$@lucky@$##</label
+                  >
+                </span>
+                <span>
+                  <button
+                    class="unas_button"
+                    onClick="manage('lucky_cancel_safe_url')"
+                  >
+                    ##$@lucky@$##Apply##$@lucky@$##
+                  </button>
+                </span>
+              </li>
+              <li class="unas_item_li" style="margin-bottom: 10px">
+                <span class="check-box-prop">
+                  <!-- <input type="checkbox" id="lucky_disable2FA" /> -->
+                  <label for="lucky_disable2FA"
+                    >##$@lucky@$##Disable 2FA##$@lucky@$##</label
+                  >
+                </span>
+                <span>
+                  <button
+                    class="unas_button"
+                    onClick="manage('lucky_disable2FA')"
+                  >
+                    ##$@lucky@$##Apply##$@lucky@$##
+                  </button>
+                </span>
+              </li>
+              <li class="unas_item_li" style="margin-bottom: 10px">
+                <span class="check-box-prop">
+                  <!-- <input type="checkbox" id="lucky_reset_user" /> -->
+                  <label for="lucky_reset_user"
+                    >##$@lucky@$##Reset User##$@lucky@$##</label
+                  >
+                </span>
+                <span>
+                  <button
+                    class="unas_button"
+                    onClick="manage('lucky_reset_user')"
+                  >
+                    ##$@lucky@$##Apply##$@lucky@$##
+                  </button>
+                </span>
+              </li>
+              <li class="unas_item_li" style="margin-bottom: 10px">
+                <span class="span_left" style="margin-left: 40px"
+                  >##$@lucky@$##Http Port:##$@lucky@$##</span
+                >
+                <span>
+                  <input
+                    type="text"
+                    id="lucky_http_port"
+                    name="lucky_input"
+                    class="unas_input"
+                    style="display: inline-block"
+                  />
+                  <button
+                    class="unas_button"
+                    onClick="manage('lucky_http_port')"
+                  >
+                    ##$@lucky@$##Apply##$@lucky@$##
+                  </button>
+                </span>
+              </li>
+              <li class="unas_item_li" style="margin-bottom: 10px">
+                <span class="span_left" style="margin-left: 40px"
+                  >##$@lucky@$##Https Port:##$@lucky@$##</span
+                >
+                <span>
+                  <input
+                    type="text"
+                    id="lucky_https_port"
+                    name="lucky_input"
+                    class="unas_input"
+                    style="display: inline-block"
+                  />
+                  <button
+                    class="unas_button"
+                    onClick="manage('lucky_https_port')"
+                  >
+                    ##$@lucky@$##Apply##$@lucky@$##
+                  </button>
+                </span>
+              </li>
+              <li class="unas_item_li" style="margin-bottom: 10px">
+                <span class="check-box-prop">
+                  <!-- <input type="checkbox" id="lucky_unlock" /> -->
+                  <label for="lucky_unlock"
+                    >##$@lucky@$##Unlock##$@lucky@$##</label
+                  >
+                </span>
+                <span>
+                  <button class="unas_button" onClick="manage('lucky_unlock')">
+                    ##$@lucky@$##Apply##$@lucky@$##
+                  </button>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="unas_content_right">
+          <span class="lucky_page_logo"></span>
+          <div class="project-addr">
+            <a href="https://lucky666.cn/" target="_blank"
+              >##$@lucky@$##Lucky Project##$@lucky@$##</a
+            >
+          </div>
+          <div class="project-addr">
+            <a
+              href="https://github.com/UNS-Third-Party-Applications/lucky"
+              target="_blank"
+              >##$@lucky@$##Current Project##$@lucky@$##</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+      ;(function () {
+        var rt = document.getElementById('lucky')
+        var pageTranslators = window.top.UNAS.CreateNodesTranslators(
+          rt.parentNode
+        )
+        var OnChangeLanguage = function (e) {
+          for (var i = 0; i < pageTranslators.length; i++) {
+            var node = pageTranslators[i].node
+            var p = pageTranslators[i].translateProperty
+            node[p] = window.top.UNAS._(pageTranslators[i].originalText)
+          }
+          if (
+            jQuery('#lucky_port_warning').attr('class') == 'input_warning_info'
+          ) {
+            luckyCheckPort()
+          }
+        }
+        OnChangeLanguage()
+        window.top.UNAS.Event.addEvent('ChangeLanguage', OnChangeLanguage)
+        window.addEventListener(
+          'unload',
+          function (e) {
+            window.top.UNAS.Event.removeEvent(
+              'ChangeLanguage',
+              OnChangeLanguage
+            )
+            window.top.UNAS.SetAppState('Lucky', 'inactive')
+          },
+          false
+        )
+      })()
+
+      jQuery('#lucky-unas_content_left').mCustomScrollbar({
+        autoHideScrollbar: true,
+        theme: 'minimal-dark',
+      })
+    </script>
+  </body>
+</html>

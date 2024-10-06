@@ -1,0 +1,54 @@
+﻿{
+    "UNASTranslation": [
+        {
+            "language": "简体中文",
+            "table": [
+                [
+                    "Lucky",
+                    "0",
+                    "Lucky"
+                ],
+                [
+                    "Internet",
+                    "0",
+                    "互联网"
+                ],
+                [
+                    "This is an U-NAS Lucky App.",
+                    "0",
+                    "适用与万由UNAS 6的Lucky套件。"
+                ],
+                [
+                    "QingCheng",
+                    "0",
+                    "青城"
+                ]
+            ]
+        },
+        {
+            "language": "한국어",
+            "table": [
+                [
+                    "Lucky",
+                    "0",
+                    "Lucky"
+                ],
+                [
+                    "Internet",
+                    "0",
+                    "인터넷"
+                ],
+                [
+                    "This is an U-NAS Lucky App.",
+                    "0",
+                    "만대UNAS 6의Lucky프로그램이적용됩니다."
+                ],
+                [
+                    "QingCheng",
+                    "0",
+                    "QingCheng"
+                ]
+            ]
+        }
+    ]
+}

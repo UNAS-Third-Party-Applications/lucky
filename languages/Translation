@@ -1,0 +1,43 @@
+{
+    "UNASTranslation": [
+        {
+            "language": "简体中文",
+            "table": [
+            	[ "Lucky", "lucky", "Lucky" ],
+            	[ "Lucky", "0", "Lucky" ],
+                [ "Lucky Service State", "lucky", "Lucky服务状态" ],
+                [ "Configuration Directory:", "lucky", "配置目录：" ],
+                [ "Manage Lucky", "lucky", "管理Lucky" ],
+                [ "Start Lucky Service", "lucky", "启动Lucky服务" ],
+                [ "Stop Lucky Service", "lucky", "停止Lucky服务" ],
+                [ "Cancel Safe URL", "lucky", "取消安全入口" ],
+                [ "Disable 2FA", "lucky", "禁用2FA验证" ],
+                [ "Reset User", "lucky", "重置账号密码为 666：666" ],
+                [ "Http Port:", "lucky", "HTTP端口:" ],
+                [ "Https Port:", "lucky", "HTTPS端口:" ],
+                [ "Unlock", "lucky", "立即解锁登录限制" ],
+                [ "Lucky Project", "lucky", "Lucky项目地址" ],
+                [ "Current Project", "lucky", "当前项目地址" ],
+                [ "Enable", "0", "启用" ],
+                [ "Unable", "0", "停用" ],
+                [ "Enable Home Dir or create a SHARE FOLDER before select","0", "请先启用home目录或者创建一个共享文件夹作为Lucky存储目录"],
+                [ "Please enable the home directory in the User Account before use","0", "使用套件前请先在用户账户应用中开启homes目录"],
+                [ "Port should between 1 and 65535", "0", "端口应该在1到65535之间" ],
+                [ "Port has been used", "0", "端口已经被使用" ],
+                [ "Failed to save configuration", "0", "保存配置失败" ],
+                ["Token is empty", "0", "Token为空"],
+                ["Unknow Operation", "0", "未知操作"],
+                ["Lucky not running", "0", "Lucky服务未运行"],
+                ["Lucky not installed", "0", "Lucky服务未安装"],
+                ["User information not obtained", "0", "未获取到用户信息"],
+                ["Failed to create Configuration directory", "0", "创建配置目录失败"],
+                ["No configuration directory set", "0", "未设置配置目录"],
+                ["Configuration directory is not exist", "0", "配置目录不存在"],
+                ["Operation successful", "0", "操作成功"],
+                ["Operation failed", "0", "操作失败"],
+                [ "Apply", "lucky", "应 用" ],
+				[ "Manage App", "lucky", "管理应用" ]
+            ]
+        }
+    ]
+}
