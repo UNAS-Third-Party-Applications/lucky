@@ -296,5 +296,27 @@ if($action == "getConfig") {
     'err' => 1,
     'msg' => 'Port should between 1 and 65535'
   ));
+} if($action == "getPort") {
+  $configDir = $jsonObj->configDir;
+  if(empty($configDir)) {
+    // 配置目录未设置
+    echo json_encode(array(
+      'err' => 2,
+      'msg' => 'No configuration directory set'
+    ));
+    return;
+  }
+  $luckyConfigDir = $configDir."/lucky";
+  $output = shell_exec("sudo /unas/apps/lucky/sbin/lucky -baseConfInfo -cd $luckyConfigDir");
+  // 如果想要以数组形式解码JSON，可以传递第二个参数为true
+  $configData = json_decode($output, true);
+  $httpPort = 16601;
+  if(!empty($configData['BaseConfigure']) && !empty($configData['BaseConfigure']['AdminWebListenPort'])) {
+    $httpPort = $configData['BaseConfigure']['AdminWebListenPort'];
+  }
+  echo json_encode(array(
+    'err' => 0,
+    'data' => $httpPort
+  ));
 }
 ?>

@@ -7,6 +7,7 @@
             	[ "Lucky", "0", "Lucky" ],
                 [ "Lucky Service State", "lucky", "Lucky服务状态" ],
                 [ "Configuration Directory:", "lucky", "配置目录：" ],
+                [ "Open Lucky", "lucky", "打开Lucky" ],
                 [ "Manage Lucky", "lucky", "管理Lucky" ],
                 [ "Start Lucky Service", "lucky", "启动Lucky服务" ],
                 [ "Stop Lucky Service", "lucky", "停止Lucky服务" ],

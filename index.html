@@ -21,6 +21,8 @@
         jQuery('#lucky_port').keyup(luckyCheckPortFunc)
       })()
 
+      configDir = undefined
+
       function getConfig() {
         jQuery('#lucky_manager_waiting_content').attr('style', 'display:block')
         jQuery('#lucky_manager_waiting_logo').attr('style', 'display:block')
@@ -42,12 +44,16 @@
                 jQuery('#changeState').html(UNAS._('Unable'))
                 jQuery('#manageAppDiv').attr('style', 'display:block;')
                 jQuery('#lucky_config_dir').attr('disabled', true)
+                configDir = data.configDir
               } else {
                 serviceState = false
+                configDir = undefined
                 jQuery('#lucky_config_dir').attr('disabled', false)
                 jQuery('#servcieState').html(UNAS._('Unable'))
                 jQuery('#changeState').html(UNAS._('Enable'))
                 jQuery('#manageAppDiv').attr('style', 'display:none;')
+                jQuery('#lucky_footer').attr('style', 'display:none;')
+                jQuery('#lucky_manage').attr('style', 'display:none;')
               }
 
               var shareFolders = data.shareFolders
@@ -86,6 +92,66 @@
               } else {
                 jQuery('#lucky_apply').attr('class', 'unas_button_disabled')
               }
+            }
+            if (data.enable) {
+              getPort()
+            } else {
+              jQuery('#lucky_manager_waiting_content').attr(
+                'style',
+                'display:none'
+              )
+              jQuery('#lucky_manager_waiting_logo').attr(
+                'style',
+                'display:none'
+              )
+            }
+          },
+          error: function (XMLHttpRequest, textStatus, errorThrown) {
+            alert(textStatus)
+            jQuery('#lucky_manager_waiting_content').attr(
+              'style',
+              'display:none'
+            )
+            jQuery('#lucky_manager_waiting_logo').attr('style', 'display:none')
+          },
+        })
+      }
+
+      function getPort() {
+        jQuery('#lucky_manager_waiting_content').attr('style', 'display:block')
+        jQuery('#lucky_manager_waiting_logo').attr('style', 'display:block')
+        jQuery.ajax({
+          url: '/apps/lucky/includes/services.php',
+          type: 'POST',
+          async: true,
+          contentType: 'application/json',
+          data: JSON.stringify({
+            token: UToken,
+            action: 'getPort',
+            configDir: configDir,
+          }),
+          dataType: 'json',
+          timeout: 20000,
+          success: function (data) {
+            if (data.err === 0) {
+              if (data.data !== null && data.data !== undefined) {
+                jQuery('#lucky_manage').attr(
+                  'url',
+                  'http://' + window.location.hostname + ':' + data.data
+                )
+                jQuery('#lucky_manage').attr(
+                  'style',
+                  'width: 120px; display:inline-block;'
+                )
+                jQuery('#lucky_footer').attr('style', 'display:block;')
+              } else {
+                jQuery('#lucky_footer').attr('style', 'display:none;')
+                jQuery('#lucky_manage').attr('style', 'display:none;')
+              }
+            } else {
+              jQuery('#lucky_info').removeClass('success-info')
+              jQuery('#lucky_info').addClass('error-info')
+              jQuery('#lucky_info').html(UNAS._(data.msg))
             }
             jQuery('#lucky_manager_waiting_content').attr(
               'style',
@@ -283,16 +349,31 @@
               jQuery('#lucky_oper_info').removeClass('error-info')
               jQuery('#lucky_oper_info').addClass('success-info')
               jQuery('#lucky_oper_info').html(UNAS._('Operation successful'))
+              if ('lucky_http_port' === eleId || 'lucky_https_port' === eleId) {
+                setTimeout(getPort(), 3000)
+              } else {
+                jQuery('#lucky_manager_waiting_content').attr(
+                  'style',
+                  'display:none'
+                )
+                jQuery('#lucky_manager_waiting_logo').attr(
+                  'style',
+                  'display:none'
+                )
+              }
             } else {
               jQuery('#lucky_oper_info').removeClass('success-info')
               jQuery('#lucky_oper_info').addClass('error-info')
               jQuery('#lucky_oper_info').html(UNAS._(data.msg))
+              jQuery('#lucky_manager_waiting_content').attr(
+                'style',
+                'display:none'
+              )
+              jQuery('#lucky_manager_waiting_logo').attr(
+                'style',
+                'display:none'
+              )
             }
-            jQuery('#lucky_manager_waiting_content').attr(
-              'style',
-              'display:none'
-            )
-            jQuery('#lucky_manager_waiting_logo').attr('style', 'display:none')
           },
           error: function (XMLHttpRequest, textStatus, errorThrown) {
             console.log(textStatus)
@@ -306,6 +387,10 @@
             jQuery('#lucky_manager_waiting_logo').attr('style', 'display:none')
           },
         })
+      }
+
+      function openLucky() {
+        window.open(jQuery('#lucky_manage').attr('url'), '_blank')
       }
 
       // 功能函数，缩略太长的字符串
@@ -557,6 +642,16 @@
             >
           </div>
         </div>
+      </div>
+      <div id="lucky_footer" class="unas_footer">
+        <button
+          onClick="openLucky()"
+          class="unas_button"
+          id="lucky_manage"
+          style="display: none"
+        >
+          ##$@lucky@$##Open Lucky##$@lucky@$##
+        </button>
       </div>
     </div>
     <script type="text/javascript">
